@@ -2,16 +2,21 @@
 //  ViewController.m
 //  YCPageView
 //
-//  Created by 月成 on 2019/6/5.
-//  Copyright © 2019 fancy. All rights reserved.
+//  Created by 米画师 on 2021/8/30.
 //
 
 #import "ViewController.h"
 #import "YCPageView.h"
+#import "HeaderTableViewController.h"
+#import "ListTableViewController.h"
 
 @interface ViewController () <YCPageViewDelegate, YCPageViewDataSource>
 
-@property (nonatomic, strong) YCPageView *pageView;
+@property (nonatomic, strong) HeaderTableViewController *headerController;
+@property (nonatomic, strong) ListTableViewController   *list1Controller;
+@property (nonatomic, strong) ListTableViewController   *list2Controller;
+@property (nonatomic, strong) YCPageView                *pageView;
+@property (nonatomic, strong) UISegmentedControl        *segmentedControl;
 
 @end
 
@@ -19,68 +24,109 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
+
     [self.view addSubview:self.pageView];
 }
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     
-    CGFloat top = self.navigationController.navigationBar.frame.size.height + self.navigationController.navigationBar.frame.origin.y;
-    
-    if (@available(iOS 11.0, *)) {
-        self.pageView.frame = CGRectMake(0, top, self.view.bounds.size.width, self.view.bounds.size.height - top - self.view.safeAreaInsets.bottom);
+    self.pageView.frame = CGRectMake(0, CGRectGetMaxY(self.navigationController.navigationBar.frame), CGRectGetWidth(self.view.bounds), CGRectGetHeight(self.view.bounds) - CGRectGetMaxY(self.navigationController.navigationBar.frame));
+}
+
+#pragma mark - YCPageViewDataSource
+- (CGFloat)heightForPageHeaderInPageView:(YCPageView *)pageView {
+    return self.headerController.view.bounds.size.height;
+}
+
+- (UIView *)viewForPageHeaderInPageView:(YCPageView *)pageView {
+    return self.headerController.view;
+}
+
+- (CGFloat)heightForPinHeaderInPageView:(YCPageView *)pageView {
+    return 50;
+}
+
+- (UIView *)viewForPinHeaderInPageView:(YCPageView *)pageView {
+    return self.segmentedControl;
+}
+
+- (NSInteger)numberOfListsInPageView:(YCPageView *)pageView {
+    return 2;
+}
+
+- (id<YCPageListViewDelegate>)pageView:(YCPageView *)pageView listAtIndex:(NSInteger)index {
+    switch (index) {
+        case 0:
+            return self.list1Controller;
+            break;
+            
+        default:
+            return self.list2Controller;
+            break;
     }
 }
 
-#pragma mark - YCPageView
-- (UIView *)headerViewInPageView:(YCPageView *)pageView {
-    UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 300)];
-    headerView.backgroundColor = [UIColor redColor];
-    
-    return headerView;
-}
 
-- (NSArray<NSString *> *)titlesInPageView:(YCPageView *)pageView {
-    return @[@"1111", @"2222", @"3333", @"4444"];
-}
-
-- (CGFloat)heightForSectionInPageView:(YCPageView *)pageView {
-    return 50.0;
-}
-
-- (NSArray<UIView *> *)viewsInPageView:(YCPageView *)pageView {
-    UIView *view1 = [UIView new];
-    view1.backgroundColor = [self randomColor];
-    
-    UIView *view2 = [UIView new];
-    view2.backgroundColor = [self randomColor];
-    
-    UIView *view3 = [UIView new];
-    view3.backgroundColor = [self randomColor];
-    
-    UIView *view4 = [UIView new];
-    view4.backgroundColor = [self randomColor];
-    
-    return @[view1, view2, view3, view4];
-}
-
-- (UIColor *)randomColor {
-    CGFloat red = ( arc4random() % 255 / 255.0 );
-    CGFloat green = ( arc4random() % 255 / 255.0 );
-    CGFloat blue = ( arc4random() % 255 / 255.0 );
-    return [UIColor colorWithRed:red green:green blue:blue alpha:1.0];
+#pragma mark JXPagerSmoothViewDelegate
+- (void)pageViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView.isDragging || scrollView.isTracking) {
+        NSInteger index = scrollView.contentOffset.x / scrollView.bounds.size.width;
+        if (index != self.segmentedControl.selectedSegmentIndex) {
+            self.segmentedControl.selectedSegmentIndex = index;
+        }
+    }
 }
 
 #pragma mark - Get
 - (YCPageView *)pageView {
     if (!_pageView) {
         _pageView = [[YCPageView alloc] init];
-        _pageView.dataSource = self;
         _pageView.delegate = self;
+        _pageView.dataSource = self;
     }
     return _pageView;
 }
+
+- (ListTableViewController *)list1Controller {
+    if (!_list1Controller) {
+        _list1Controller = [[ListTableViewController alloc] init];
+    }
+    return _list1Controller;
+}
+ 
+- (ListTableViewController *)list2Controller {
+    if (!_list2Controller) {
+        _list2Controller = [[ListTableViewController alloc] init];
+    }
+    return _list2Controller;
+}
+
+- (HeaderTableViewController *)headerController {
+    if (!_headerController) {
+        _headerController = [[HeaderTableViewController alloc] init];
+        _headerController.view.frame = CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 300);
+    }
+    return _headerController;
+}
+
+- (UISegmentedControl *)segmentedControl {
+    if (!_segmentedControl) {
+        _segmentedControl = [[UISegmentedControl alloc] initWithItems:@[@"11111", @"22222"]];
+        [_segmentedControl addTarget:self action:@selector(changeAction:) forControlEvents:UIControlEventValueChanged];
+        _segmentedControl.selectedSegmentIndex = 0;
+        _segmentedControl.backgroundColor = UIColor.redColor;
+    }
+    return _segmentedControl;
+}
+
+#pragma mark - Action
+- (void)changeAction:(UISegmentedControl *)sender {
+    NSInteger index = sender.selectedSegmentIndex;
+    
+    [self.pageView.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0] atScrollPosition:UICollectionViewScrollPositionNone animated:YES];
+}
+
 
 
 @end

@@ -2,15 +2,17 @@
 //  main.m
 //  YCPageView
 //
-//  Created by 月成 on 2019/6/5.
-//  Copyright © 2019 fancy. All rights reserved.
+//  Created by 米画师 on 2021/8/30.
 //
 
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"
 
 int main(int argc, char * argv[]) {
+    NSString * appDelegateClassName;
     @autoreleasepool {
-        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+        // Setup code that might create autoreleased objects goes here.
+        appDelegateClassName = NSStringFromClass([AppDelegate class]);
     }
+    return UIApplicationMain(argc, argv, nil, appDelegateClassName);
 }
